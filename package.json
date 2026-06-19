@@ -1,0 +1,53 @@
+{
+  "name": "jobhunt-india",
+  "version": "1.0.0",
+  "description": "Job Hunts Agent India — an AI job-search co-pilot for Indian candidates. Evaluate roles, build India-format resumes, scan portals, track applications. Works with Claude Code, Antigravity, Cursor, Copilot, and other AI CLIs.",
+  "private": true,
+  "scripts": {
+    "doctor": "node doctor.mjs",
+    "verify": "node verify-pipeline.mjs",
+    "normalize": "node normalize-statuses.mjs",
+    "dedup": "node dedup-tracker.mjs",
+    "merge": "node merge-tracker.mjs",
+    "reconcile": "node reconcile-pipeline.mjs",
+    "pdf": "node generate-pdf.mjs",
+    "sync-check": "node cv-sync-check.mjs",
+    "update:check": "node update-system.mjs check",
+    "update:test": "node updater-migration-tests.mjs",
+    "update": "node update-system.mjs apply",
+    "rollback": "node update-system.mjs rollback",
+    "liveness": "node check-liveness.mjs",
+    "scan": "node scan.mjs",
+    "scan:full": "node scan-ats-full.mjs",
+    "validate:portals": "node validate-portals.mjs",
+    "verify:portals": "node verify-portals.mjs",
+    "tracker": "node tracker.mjs",
+    "patterns": "node analyze-patterns.mjs",
+    "gemini:eval": "node gemini-eval.mjs",
+    "postinstall": "npx playwright install chromium --with-deps || npx playwright install chromium --with-deps"
+  },
+  "keywords": [
+    "ai",
+    "job-search",
+    "india",
+    "resume",
+    "naukri",
+    "claude-code",
+    "career",
+    "jobhunt-india",
+    "automation"
+  ],
+  "author": "Subham Kejriwal (https://github.com/subhamlistingsmanager)",
+  "homepage": "https://github.com/subhamlistingsmanager/jobhunt.agents-India",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/subhamlistingsmanager/jobhunt.agents-India"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "dotenv": "^17.0.0",
+    "js-yaml": "^4.1.1",
+    "playwright": "1.61.0"
+  }
+}

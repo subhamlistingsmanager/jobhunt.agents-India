@@ -1,0 +1,413 @@
+# Portal Scanner Configuration — Job Hunts Agent India
+# Used by /jobhunt scan to discover new offers automatically.
+#
+# HOW TO USE:
+#   1. Copy this file to portals.yml in the project root.
+#   2. Edit title_filter.positive with YOUR target-role keywords.
+#   3. Turn companies on/off (enabled: true/false) and add your own.
+#   4. Adjust search_queries for the Indian job boards you care about.
+#
+# TWO KINDS OF SOURCES (see docs/INDIAN-JOB-SOURCES.md for the full guide):
+#
+#   A) ATS-backed (zero-token, fully automatic): companies on Greenhouse / Lever /
+#      Ashby / Workable / SmartRecruiters / Recruitee. Many Indian product startups
+#      use these — the scanner hits their public JSON/career pages directly.
+#
+#   B) Indian job boards WITHOUT public APIs (Naukri, LinkedIn India, Instahyre,
+#      Cutshort, Hirist, Foundit, Wellfound, IIMJobs, Internshala, Unstop): these
+#      can't be scanned token-free. Use them two ways:
+#         • run the `search_queries` below (WebSearch with site: filters), OR
+#         • paste a specific role URL into data/pipeline.md and run `/jobhunt pipeline`.
+
+# -- Scan history recheck policy (optional) --
+# URLs in data/scan-history.tsv are deduped forever by default. Uncomment to let
+# previously-seen URLs become eligible again after N days (roles that reopen).
+# scan_history:
+#   recheck_after_days: 30
+
+# -- Location filter (optional) --
+# Filter scanned jobs by location. Case-insensitive substring match.
+# Order: empty location passes → always_allow wins → block rejects → allow must match.
+# Tuned for India below. Uncomment and edit to your target cities.
+#
+# location_filter:
+#   always_allow:
+#     - "Remote"
+#     - "India"
+#   allow:
+#     - "Bengaluru"
+#     - "Bangalore"
+#     - "Hyderabad"
+#     - "Pune"
+#     - "Gurgaon"
+#     - "Gurugram"
+#     - "Noida"
+#     - "Mumbai"
+#     - "Chennai"
+#     - "Delhi"
+#     - "Remote"
+#     - "India"
+#   block:
+#     - "United States"
+#     - "United Kingdom"
+#     - "Singapore"
+#     - "Germany"
+
+# -- Salary filter (optional) --
+# Annual CTC filter. In India quote values in rupees (LPA × 100000).
+# Only applies when a job exposes structured salary (most Indian listings don't,
+# so this rarely fires — it's a safety net, not the main filter).
+# Example: target roles paying at least ₹20 LPA, no upper limit.
+# salary_filter:
+#   min: 2000000       # ₹20,00,000 = 20 LPA
+#   max: 0             # 0 = no upper limit
+#   currency: "INR"
+
+# -- Title filter --
+# At least 1 positive must match AND 0 negatives (case-insensitive).
+# [CUSTOMIZE] These are generic software examples — replace with YOUR field's
+# keywords (data, QA, DevOps, product, design, finance, sales, etc.).
+
+title_filter:
+  positive:
+    - "Software Engineer"
+    - "SDE"
+    - "Backend"
+    - "Frontend"
+    - "Full Stack"
+    - "Full-Stack"
+    - "Platform Engineer"
+    - "DevOps"
+    - "Data Engineer"
+    - "Data Scientist"
+    - "Machine Learning"
+    - "ML Engineer"
+    - "AI Engineer"
+    - "Product Manager"
+    - "QA"
+    - "SDET"
+    - "Mobile"
+    - "Android"
+    - "iOS"
+  negative:
+    # Roles you want to exclude. Freshers: remove "Intern" if you want internships.
+    - "Sales"
+    - "Telecaller"
+    - "Field"
+    - "BPO"
+  seniority_boost:
+    # Add relevance but not required
+    - "Senior"
+    - "Staff"
+    - "Lead"
+    - "Principal"
+    - "SDE II"
+    - "SDE III"
+
+# -- Search queries --
+# Each query runs a WebSearch. The scanner extracts title, URL, company from results.
+# These target Indian job boards that have no public API. Turn on the ones you use.
+# [CUSTOMIZE] Replace the quoted role keywords with YOUR target roles.
+
+search_queries:
+
+  # ── Naukri (India's largest job board) ──
+  - name: Naukri — SDE / Backend
+    query: 'site:naukri.com "Software Engineer" OR "Backend Developer" OR "SDE" Bengaluru OR Hyderabad OR remote'
+    enabled: true
+
+  # ── LinkedIn India ──
+  - name: LinkedIn — SDE India
+    query: 'site:linkedin.com/jobs "Software Engineer" OR "Backend Engineer" OR "Full Stack" India Bengaluru OR Hyderabad OR Pune'
+    enabled: true
+
+  # ── Instahyre (curated tech, India) ──
+  - name: Instahyre — Engineering
+    query: 'site:instahyre.com "Software Engineer" OR "Backend" OR "Full Stack" OR "SDE"'
+    enabled: true
+
+  # ── Cutshort (startup tech, India) ──
+  - name: Cutshort — Engineering
+    query: 'site:cutshort.io "Software Engineer" OR "Backend Developer" OR "Full Stack Developer"'
+    enabled: true
+
+  # ── Hirist (tech-only, India) ──
+  - name: Hirist — Backend / Full Stack
+    query: 'site:hirist.tech OR site:hirist.com "Backend" OR "Full Stack" OR "Java" OR "Python" OR "SDE"'
+    enabled: true
+
+  # ── Wellfound / AngelList (startups) ──
+  - name: Wellfound — India Startups
+    query: 'site:wellfound.com "Software Engineer" OR "Founding Engineer" OR "Backend" India OR Bengaluru OR remote'
+    enabled: true
+
+  # ── Foundit (ex-Monster India) ──
+  - name: Foundit — Engineering
+    query: 'site:foundit.in "Software Engineer" OR "Backend Developer" OR "Full Stack"'
+    enabled: false
+
+  # ── IIMJobs (MBA / finance / leadership / product) ──
+  - name: IIMJobs — Product / Strategy
+    query: 'site:iimjobs.com "Product Manager" OR "Strategy" OR "Business Analyst"'
+    enabled: false
+
+  # ── Internshala (internships & fresher roles) ──
+  - name: Internshala — Tech Internships
+    query: 'site:internshala.com "Software Development" OR "Backend" OR "Web Development" internship'
+    enabled: false
+
+  # ── Unstop (campus hiring, competitions, fresher jobs) ──
+  - name: Unstop — Fresher / Campus
+    query: 'site:unstop.com "Software Engineer" OR "Graduate Engineer Trainee" OR "SDE" fresher 2025 OR 2026'
+    enabled: false
+
+  # ── ATS aggregators (Indian startups on Greenhouse / Lever / Ashby) ──
+  - name: Greenhouse — India SDE
+    query: 'site:boards.greenhouse.io OR site:job-boards.greenhouse.io "Software Engineer" OR "Backend" India OR Bengaluru'
+    enabled: true
+
+  - name: Lever — India SDE
+    query: 'site:jobs.lever.co "Software Engineer" OR "Backend" OR "Full Stack" India OR Bengaluru'
+    enabled: true
+
+  - name: Ashby — India Engineering
+    query: 'site:jobs.ashbyhq.com "Software Engineer" OR "Backend" OR "Full Stack" India OR Bengaluru OR remote'
+    enabled: true
+
+# -- Tracked companies --
+# Indian product companies and startups whose career pages are checked directly.
+# Many use Greenhouse / Lever / Ashby (auto-detected from careers_url). Where the
+# ATS slug isn't certain, scan_method: websearch is used as a safe default — the
+# agent / you can later pin an exact `api:` or ATS URL for faster, token-free scans.
+#
+# scan_method: playwright (default) | websearch | local_parser
+# Verify a company's real careers URL before relying on it; slugs change.
+
+tracked_companies:
+
+  # ── Fintech ──
+  - name: Razorpay
+    careers_url: https://razorpay.com/jobs/
+    scan_method: websearch
+    scan_query: '"Razorpay" careers "Software Engineer" OR "Backend" OR "SDE"'
+    notes: "Bengaluru. Payments. Large eng org."
+    enabled: true
+
+  - name: Zerodha
+    careers_url: https://zerodha.com/careers/
+    scan_method: websearch
+    scan_query: '"Zerodha" OR "zerodha.com/careers" "Engineer" OR "Developer"'
+    notes: "Bengaluru. Broking. Lean, high-bar eng."
+    enabled: true
+
+  - name: Groww
+    careers_url: https://groww.in/careers
+    scan_method: websearch
+    scan_query: '"Groww" careers "Software Engineer" OR "Backend" OR "Android" OR "SDE"'
+    notes: "Bengaluru. Investing app."
+    enabled: true
+
+  - name: PhonePe
+    careers_url: https://www.phonepe.com/careers/
+    scan_method: websearch
+    scan_query: '"PhonePe" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Bengaluru. Payments super-app. Large eng org."
+    enabled: true
+
+  - name: CRED
+    careers_url: https://careers.cred.club/
+    scan_method: websearch
+    scan_query: '"CRED" careers "Engineer" OR "Backend" OR "Android" OR "iOS"'
+    notes: "Bengaluru. Fintech/credit."
+    enabled: true
+
+  - name: Juspay
+    careers_url: https://juspay.io/careers
+    scan_method: websearch
+    scan_query: '"Juspay" careers "Engineer" OR "Backend" OR "Haskell"'
+    notes: "Bengaluru. Payments infra (UPI/Hyperswitch)."
+    enabled: true
+
+  - name: Navi
+    careers_url: https://navi.com/careers
+    scan_method: websearch
+    scan_query: '"Navi" careers "Software Engineer" OR "Backend" OR "SDE"'
+    notes: "Bengaluru. Lending/insurance (Sachin Bansal)."
+    enabled: false
+
+  # ── Consumer / commerce ──
+  - name: Swiggy
+    careers_url: https://careers.swiggy.com/
+    scan_method: websearch
+    scan_query: '"Swiggy" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Bengaluru. Food/quick-commerce."
+    enabled: true
+
+  - name: Zomato (Eternal)
+    careers_url: https://www.zomato.com/careers
+    scan_method: websearch
+    scan_query: '"Zomato" OR "Eternal" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Gurugram. Food delivery."
+    enabled: false
+
+  - name: Flipkart
+    careers_url: https://www.flipkartcareers.com/
+    scan_method: websearch
+    scan_query: '"Flipkart" careers "Software Development Engineer" OR "SDE" OR "Backend"'
+    notes: "Bengaluru. E-commerce. Large SDE org."
+    enabled: true
+
+  - name: Meesho
+    careers_url: https://www.meesho.io/jobs
+    scan_method: websearch
+    scan_query: '"Meesho" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Bengaluru. Social/value commerce."
+    enabled: true
+
+  - name: Rapido
+    careers_url: https://careers.rapido.bike/
+    scan_method: websearch
+    scan_query: '"Rapido" careers "Software Engineer" OR "Backend" OR "SDE"'
+    notes: "Bengaluru. Mobility."
+    enabled: false
+
+  - name: Urban Company
+    careers_url: https://careers.urbancompany.com/
+    scan_method: websearch
+    scan_query: '"Urban Company" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Gurugram. Home services marketplace."
+    enabled: false
+
+  # ── SaaS / dev tools (often on Greenhouse/Lever/Ashby) ──
+  - name: Postman
+    careers_url: https://www.postman.com/company/careers/
+    scan_method: websearch
+    scan_query: '"Postman" careers "Software Engineer" OR "Backend" OR "Frontend" Bengaluru OR India'
+    notes: "Bengaluru/SF. API platform."
+    enabled: true
+
+  - name: Freshworks
+    careers_url: https://www.freshworks.com/company/careers/
+    scan_method: websearch
+    scan_query: '"Freshworks" careers "Software Engineer" OR "SDE" OR "Backend" Chennai OR India'
+    notes: "Chennai. SaaS (CRM/ITSM). NASDAQ-listed."
+    enabled: true
+
+  - name: Zoho
+    careers_url: https://www.zoho.com/careers/
+    scan_method: websearch
+    scan_query: '"Zoho" careers "Software Developer" OR "Member Technical Staff" OR "Engineer"'
+    notes: "Chennai. Bootstrapped SaaS suite."
+    enabled: false
+
+  - name: BrowserStack
+    careers_url: https://www.browserstack.com/careers
+    scan_method: websearch
+    scan_query: '"BrowserStack" careers "Software Engineer" OR "Backend" OR "SDET"'
+    notes: "Mumbai/remote. Test infra."
+    enabled: true
+
+  - name: Chargebee
+    careers_url: https://www.chargebee.com/careers/
+    scan_method: websearch
+    scan_query: '"Chargebee" careers "Software Engineer" OR "Backend" OR "SDE"'
+    notes: "Chennai. Subscription billing SaaS."
+    enabled: false
+
+  - name: Hasura
+    careers_url: https://hasura.io/careers/
+    scan_method: websearch
+    scan_query: '"Hasura" careers "Engineer" OR "Backend" OR "Haskell" OR "Go"'
+    notes: "Bengaluru/remote. GraphQL data platform."
+    enabled: false
+
+  - name: Atlan
+    careers_url: https://atlan.com/careers/
+    scan_method: websearch
+    scan_query: '"Atlan" careers "Software Engineer" OR "Backend" OR "Frontend"'
+    notes: "Remote-first (India). Data catalog/governance."
+    enabled: false
+
+  - name: Sprinklr
+    careers_url: https://www.sprinklr.com/careers/
+    scan_method: websearch
+    scan_query: '"Sprinklr" careers "Software Engineer" OR "SDE" OR "Backend" Gurgaon OR India'
+    notes: "Gurugram. CXM SaaS. NYSE-listed."
+    enabled: false
+
+  # ── AI / ML product companies (India) ──
+  - name: Sarvam AI
+    careers_url: https://www.sarvam.ai/careers
+    scan_method: websearch
+    scan_query: '"Sarvam AI" careers "Engineer" OR "Research" OR "ML"'
+    notes: "Bengaluru. Indian LLMs / voice AI."
+    enabled: false
+
+  - name: Observe.ai
+    careers_url: https://www.observe.ai/careers
+    scan_method: websearch
+    scan_query: '"Observe.AI" careers "Software Engineer" OR "ML" OR "Backend"'
+    notes: "Bengaluru. Contact-center AI."
+    enabled: false
+
+  - name: Yellow.ai
+    careers_url: https://yellow.ai/careers/
+    scan_method: websearch
+    scan_query: '"Yellow.ai" careers "Software Engineer" OR "Backend" OR "ML"'
+    notes: "Bengaluru. Conversational AI."
+    enabled: false
+
+  # ── Edtech / gaming / health ──
+  - name: PhysicsWallah
+    careers_url: https://careers.pw.live/
+    scan_method: websearch
+    scan_query: '"PhysicsWallah" OR "pw.live" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Noida. Edtech."
+    enabled: false
+
+  - name: Dream11 (Dream Sports)
+    careers_url: https://www.dreamsports.group/careers
+    scan_method: websearch
+    scan_query: '"Dream11" OR "Dream Sports" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Mumbai. Fantasy sports. High-scale eng."
+    enabled: false
+
+  - name: Innovaccer
+    careers_url: https://innovaccer.com/careers
+    scan_method: websearch
+    scan_query: '"Innovaccer" careers "Software Engineer" OR "SDE" OR "Backend"'
+    notes: "Noida/US. Healthcare data platform."
+    enabled: false
+
+# ── Advanced: local parsers for SSR/static career pages (optional) ──
+# For a company whose careers page renders server-side (no ATS, no JS), you can
+# point it at a small local script that prints jobs as JSON to stdout:
+#   [{ "title": "...", "url": "...", "location": "..." }]
+# Most parser scripts already know their target careers URL; `args` are optional.
+#
+# JavaScript parser:
+# - name: Example JS Company
+#   careers_url: https://example.com/careers
+#   scan_method: local_parser
+#   parser:
+#     command: node
+#     script: scripts/parsers/example-js-company-jobs.js
+#     format: jobs-json-v1
+#   enabled: true
+#
+# Python parser:
+# - name: Example Python Company
+#   careers_url: https://example.org/jobs
+#   scan_method: local_parser
+#   parser:
+#     command: python3
+#     script: scripts/parsers/example_python_company_jobs.py
+#     format: jobs-json-v1
+#   enabled: true
+
+# ── Note on large IT services (TCS / Infosys / Wipro / HCL / Accenture / Cognizant) ──
+# These hire at huge volume but post on their own portals (often Workday / Darwinbox /
+# SuccessFactors) with no public ATS API. Don't scan them here — instead:
+#   • Apply via their official careers site or campus drives, and
+#   • paste a specific role URL into data/pipeline.md, then run `/jobhunt pipeline`.
+# See docs/INDIAN-JOB-SOURCES.md.

@@ -1,0 +1,1 @@
+../../../.agents/skills/jobhunt-india/SKILL.md

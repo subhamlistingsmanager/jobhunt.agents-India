@@ -1,0 +1,347 @@
+# Job Hunts Agent India -- AI Job Search Pipeline
+
+## Origin
+
+Job Hunts Agent India is built for **Indian candidates** — freshers, students, and working professionals — hunting jobs with an AI coding CLI (Claude Code, Antigravity, Cursor, Copilot, and others). It evaluates roles against your CV, builds India-format resumes (fresher and experienced), scans portals, and tracks every application — all locally, with you in control.
+**It works out of the box, but it's designed to be made yours.** If the archetypes don't match your field, the scoring doesn't fit your priorities, or you want different target cities — just ask. You (AI Agent) can edit the user's files. The user says "change the archetypes to data-analyst roles" or "target only Bengaluru and Hyderabad" and you do it. That's the whole point.
+
+## Data Contract (CRITICAL)
+
+There are two layers. Read `DATA_CONTRACT.md` for the full list.
+
+**User Layer (NEVER auto-updated, personalization goes HERE):**
+- `cv.md`, `config/profile.yml`, `modes/_profile.md`, `article-digest.md`, `portals.yml`
+- `data/*`, `reports/*`, `output/*`, `interview-prep/*`
+
+**System Layer (auto-updatable, DON'T put user data here):**
+- `modes/_shared.md`, `modes/oferta.md`, all other modes
+- `CLAUDE.md`, `*.mjs` scripts, `dashboard/*`, `templates/*`, `batch/*`
+
+**THE RULE: When the user asks to customize anything (archetypes, narrative, negotiation scripts, proof points, location policy, comp targets), ALWAYS write to `modes/_profile.md` or `config/profile.yml`. NEVER edit `modes/_shared.md` for user-specific content.** This ensures system updates don't overwrite their customizations.
+
+## Update Check
+
+On the first message of each session, run the update checker silently:
+
+```bash
+node update-system.mjs check
+```
+
+Parse the JSON output:
+- `{"status": "update-available", "local": "1.0.0", "remote": "1.1.0", "changelog": "..."}` → tell the user:
+  > "jobhunt-india update available (v{local} → v{remote}). Your data (CV, profile, tracker, reports) will NOT be touched. Want me to update?"
+  If yes → run `node update-system.mjs apply`. If no → run `node update-system.mjs dismiss`.
+- `{"status": "up-to-date"}` → say nothing
+- `{"status": "dismissed"}` → say nothing
+- `{"status": "offline"}` → say nothing
+- `{"status": "no-remote-version"}` → say nothing (checker reached GitHub but neither VERSION nor the latest release tag parsed as semver — treat as a silent non-failure, same as offline)
+
+The user can also say "check for updates" or "update jobhunt-india" at any time to force a check.
+To rollback: `node update-system.mjs rollback`
+
+## What is jobhunt-india
+
+AI-powered job search automation built on Claude Code: pipeline tracking, offer evaluation, CV generation, portal scanning, batch processing.
+
+### Main Files
+
+| File | Function |
+|------|----------|
+| `data/applications.md` | Application tracker |
+| `data/pipeline.md` | Inbox of pending URLs |
+| `data/scan-history.tsv` | Scanner dedup history |
+| `portals.yml` | Query and company config |
+| `templates/cv-template.html` | HTML template for CVs |
+| `templates/cv-template.tex` | LaTeX/Overleaf template for CVs |
+| `generate-pdf.mjs` | Playwright: HTML to PDF |
+| `generate-latex.mjs` | LaTeX CV validator + pdflatex compiler |
+| `article-digest.md` | Compact proof points from portfolio (optional) |
+| `interview-prep/story-bank.md` | Accumulated STAR+R stories across evaluations |
+| `interview-prep/{company}-{role}.md` | Company-specific interview intel reports |
+| `analyze-patterns.mjs` | Pattern analysis script (JSON output) |
+| `followup-cadence.mjs` | Follow-up cadence calculator (JSON output) |
+| `data/follow-ups.md` | Follow-up history tracker |
+| `scan.mjs` | Zero-token portal scanner — hits Greenhouse/Ashby/Lever APIs directly, zero LLM cost |
+| `check-liveness.mjs` | Job posting liveness checker |
+| `liveness-core.mjs` | Shared liveness logic (expired signals win over generic Apply text) |
+| `reports/` | Evaluation reports (format: `{###}-{company-slug}-{YYYY-MM-DD}.md`). Blocks A-F + G (Posting Legitimacy), plus `## Machine Summary` YAML for downstream scripts. Header includes `**Legitimacy:** {tier}`. |
+
+### OpenCode & Gemini CLI Commands
+
+Both [OpenCode](https://opencode.ai) and [Gemini CLI](https://github.com/google-gemini/gemini-cli) natively support the open agent skill standard (`agentskills.io`). 
+
+Instead of registering individual `.toml` files for every slash command, all subcommands are routed through the single unified skill defined in `.agents/skills/jobhunt-india/SKILL.md`.
+
+You can invoke the command center or any of its modes directly within your CLI:
+
+* `/jobhunt` (Shows the Command Center menu)
+* `/jobhunt {JD text or URL}` (Runs the auto-evaluation pipeline)
+* `/jobhunt [subcommand]` (Runs a specific subcommand)
+
+#### Subcommands:
+* `pipeline` — Process pending URLs from inbox
+* `scan` — Scan job portals for new offers
+* `tracker` — Show application status overview
+* `pdf` — Generate ATS-optimized CV PDF
+* `latex` — Export CV as LaTeX/Overleaf .tex
+* `cover` — Generate cover letter
+* `interview-prep` — Generate interview preparation guide
+* `interview` — Onboarding/on-demand interview
+* `contacto` — Generate LinkedIn outreach message
+* `deep` — Execute deep company research
+* `training` — Evaluate course/cert against North Star
+* `project` — Evaluate portfolio project idea
+* `batch` — Run parallel batch evaluations
+* `patterns` — Analyze rejection patterns
+* `followup` — Update and calculate follow-ups
+* `update` — Update system files
+
+All `modes/*` files and prompt contexts (e.g., `GEMINI.md`) are shared across Claude Code, OpenCode, and Gemini CLI.
+
+### First Run — Onboarding (IMPORTANT)
+
+**Before doing ANYTHING else, check if the system is set up.** On the first message of each session, run the cold-start check — one deterministic source of truth (this doc and `doctor.mjs` share the same prerequisite list, so they can never drift):
+
+```bash
+node doctor.mjs --json
+```
+
+Output: `{"onboardingNeeded": <bool>, "missing": [...], "warnings": [...]}`, where `missing` lists whichever of `cv.md`, `config/profile.yml`, `modes/_profile.md`, `portals.yml` are absent. `warnings` is reserved for non-blocking setup signals.
+
+If `modes/_profile.md` is missing, copy from `modes/_profile.template.md` silently. This is the user's customization file — it will never be overwritten by updates.
+
+**If, after that, `onboardingNeeded` is still true (any of `cv.md` / `config/profile.yml` / `portals.yml` is missing), enter onboarding mode.** Do NOT proceed with evaluations, scans, or any other mode until the basics are in place. Guide the user step by step:
+
+#### Step 1: Fresher or experienced? (ask first — it shapes everything)
+Before the CV, ask:
+> "Quick one to set things up right: are you a **fresher / student** (campus placements, first job) or an **experienced professional**? This decides your resume format and how I evaluate roles."
+
+Record the answer as `candidate_type` (`fresher` / `experienced`) when you create the profile.
+
+#### Step 2: CV (required)
+If `cv.md` is missing, ask:
+> "I don't have your CV yet. You can either:
+> 1. Paste your CV/resume here and I'll convert it to markdown
+> 2. Paste your LinkedIn URL and I'll extract the key info
+> 3. Tell me about yourself and I'll draft one for you
+>
+> Which do you prefer?"
+
+Create `cv.md` in clean markdown. **For an experienced candidate:** Summary, Experience, Key Achievements, Education, Skills, Certifications. **For a fresher:** Objective, Education (10th %, 12th %, Degree+CGPA), Technical Skills, Projects, Internships, Certifications, Achievements, Coding Profiles. Match the section order to the relevant India template (`cv-experienced-india.html` / `cv-fresher-india.html`).
+
+#### Step 3: Profile (required)
+If `config/profile.yml` is missing, copy from `config/profile.example.yml` and then ask:
+> "A few details to personalize everything:
+> - Full name, email, phone (+91), and current city
+> - Target roles (e.g. 'Backend Engineer', 'Data Analyst', 'Product Manager')
+> - Preferred cities / remote, and whether you'll relocate
+> - Expected CTC (in ₹ LPA) and — if working — your current CTC
+> - Your notice period (in days)
+>
+> I'll set everything up for you."
+
+Fill in `config/profile.yml` (including `candidate_type`, `compensation`, `work_preference`, `notice_period`). Store user-specific archetypes/narrative in `config/profile.yml` or `modes/_profile.md` — never in `modes/_shared.md`.
+
+#### Step 4: Portals (recommended)
+If `portals.yml` is missing:
+> "I'll set up the job scanner with Indian startups (Razorpay, Zerodha, Groww, Postman…) plus ready-made searches for Naukri, LinkedIn India, Instahyre, Cutshort, Hirist, and more. Want me to tune the role keywords to what you're targeting?"
+
+Copy `templates/portals.example.yml` → `portals.yml`. Update `title_filter.positive` to the user's target roles, and `location_filter`/`preferred_locations` to their cities. Point them to `docs/INDIAN-JOB-SOURCES.md` for how each Indian board is used.
+
+#### Step 5: Tracker
+If `data/applications.md` doesn't exist, create it:
+```markdown
+# Applications Tracker
+
+| # | Date | Company | Role | Score | Status | PDF | Report | Notes |
+|---|------|---------|------|-------|--------|-----|--------|-------|
+```
+
+#### Step 6: Get to know the user (important for quality)
+
+After the basics are set up, proactively ask for more context. The more you know, the better your evaluations will be:
+
+> "The basics are ready. But the system works much better when it knows you well. Can you tell me more about:
+> - What makes you unique? What's your 'superpower' that other candidates don't have?
+> - What kind of work excites you? What drains you?
+> - Any deal-breakers? (e.g., no on-site, no startups under 20 people, no Java shops)
+> - Your best professional achievement — the one you'd lead with in an interview
+> - Any projects, articles, or case studies you've published?
+>
+> The more context you give me, the better I filter. Think of it as onboarding a recruiter — the first week I need to learn about you, then I become invaluable."
+
+Store any insights the user shares in `config/profile.yml` (under narrative), `modes/_profile.md`, or in `article-digest.md` if they share proof points. Do not put user-specific archetypes or framing into `modes/_shared.md`.
+
+**After every evaluation, learn.** If the user says "this score is too high, I wouldn't apply here" or "you missed that I have experience in X", update your understanding in `modes/_profile.md`, `config/profile.yml`, or `article-digest.md`. The system should get smarter with every interaction without putting personalization into system-layer files.
+
+#### Step 7: Ready
+Once all files exist, confirm:
+> "You're all set! You can now:
+> - Paste a job URL (from Naukri, LinkedIn, an ATS page — anything) to evaluate it
+> - Run `/jobhunt scan` to search Indian startups + boards for new roles
+> - Run `/jobhunt pdf` to build a tailored India-format resume
+> - Run `/jobhunt` to see all commands
+>
+> Everything is customizable — just ask me to change roles, cities, scoring, or your resume format.
+>
+> Tip: a GitHub profile, a small portfolio, or a couple of LeetCode/strong project links noticeably improve callbacks — share any you have and I'll weave them in."
+
+Then suggest automation:
+> "Want me to scan for new offers automatically? I can set up a recurring scan every few days so you don't miss anything. Just say 'scan every 3 days' and I'll configure it."
+
+If the user accepts, use the `/loop` or `/schedule` skill (if available) to set up a recurring `/jobhunt scan` (or `/jobhunt-scan` if using OpenCode). If those aren't available, suggest adding a cron job or remind them to run `/jobhunt scan` (or `/jobhunt-scan` if using OpenCode) periodically.
+
+### Personalization
+
+This system is designed to be customized by YOU (AI Agent). When the user asks you to change archetypes, translate modes, adjust scoring, add companies, or modify negotiation scripts -- do it directly. You read the same files you use, so you know exactly what to edit.
+
+**Common customization requests:**
+- "Change the archetypes to [backend/frontend/data/devops] roles" → edit `modes/_profile.md` or `config/profile.yml`
+- "Translate the modes to English" → edit all files in `modes/`
+- "Add these companies to my portals" → edit `portals.yml`
+- "Update my profile" → edit `config/profile.yml`
+- "Change the CV template design" → edit `templates/cv-template.html`
+- "Adjust the scoring weights" → edit `modes/_profile.md` for user-specific weighting, or edit `modes/_shared.md` and `batch/batch-prompt.md` only when changing the shared system defaults for everyone
+
+### India Context (always on)
+
+This system is tuned for India. Apply these defaults unless the user overrides them:
+
+- **Compensation** is CTC in ₹ LPA (lakhs per annum). Distinguish fixed vs variable vs ESOP/RSU. Treat in-hand ≈ 70–80% of fixed (a rough orientation, never a guarantee). See `modes/oferta.md` Block D.
+- **Notice period** matters on nearly every application (30/60/90 days, buyout, early release). Pull it from `config/profile.yml → notice_period` and surface it in apply/cover flows. See `modes/_shared.md` and `docs/INDIAN-JOB-SOURCES.md`.
+- **Resume format** follows the candidate type — fresher (academics-first) vs experienced (impact-first). The agent picks the template in `modes/pdf.md` from `config/profile.yml` (`cv.template` → else `candidate_type`). Render A4.
+- **Job sources** — scan ATS-backed startups (`/jobhunt scan`); for Naukri/LinkedIn India/Instahyre/Cutshort/Hirist/Foundit/Wellfound/IIMJobs/Internshala/Unstop, paste a role URL into `data/pipeline.md` then `/jobhunt pipeline`, or use the `search_queries` in `portals.yml`. Full guide: `docs/INDIAN-JOB-SOURCES.md`.
+- **Language** is Indian English. Generate all candidate-facing text in clear, professional Indian English.
+
+### Skill Modes
+
+| If the user... | Mode |
+|----------------|------|
+| Pastes JD or URL | auto-pipeline (evaluate + report + PDF + tracker) |
+| Asks to evaluate offer | `oferta` |
+| Asks to compare offers | `ofertas` |
+| Wants LinkedIn outreach | `contacto` |
+| Asks for company research | `deep` |
+| Preps for interview at specific company | `interview-prep` |
+| Wants interactive profile/CV onboarding | `interview` |
+| Wants to generate CV/PDF | `pdf` |
+| Evaluates a course/cert | `training` |
+| Evaluates portfolio project | `project` |
+| Asks about application status | `tracker` |
+| Fills out application form | `apply` |
+| Searches for new offers | `scan` |
+| Processes pending URLs | `pipeline` |
+| Batch processes offers | `batch` |
+| Asks about rejection patterns or wants to improve targeting | `patterns` |
+| Asks about follow-ups or application cadence | `followup` |
+
+### CV Source of Truth
+
+- `cv.md` in project root is the canonical CV
+- `article-digest.md` has detailed proof points (optional)
+- **NEVER hardcode metrics** -- read them from these files at evaluation time
+
+---
+
+## Ethical Use -- CRITICAL
+
+**This system is designed for quality, not quantity.** The goal is to help the user find and apply to roles where there is a genuine match -- not to spam companies with mass applications.
+
+- **NEVER submit an application without the user reviewing it first.** Fill forms, draft answers, generate PDFs -- but always STOP before clicking Submit/Send/Apply. The user makes the final call.
+- **Strongly discourage low-fit applications.** If a score is below 4.0/5, explicitly recommend against applying. The user's time and the recruiter's time are both valuable. Only proceed if the user has a specific reason to override the score.
+- **Quality over speed.** A well-targeted application to 5 companies beats a generic blast to 50. Guide the user toward fewer, better applications.
+- **Respect recruiters' time.** Every application a human reads costs someone's attention. Only send what's worth reading.
+
+---
+
+## Offer Verification -- MANDATORY
+
+**NEVER trust WebSearch/WebFetch to verify if an offer is still active.** ALWAYS use Playwright:
+1. `browser_navigate` to the URL
+2. `browser_snapshot` to read content
+3. Only footer/navbar without JD = closed. Title + description + Apply = active.
+
+**Exception for batch workers (`claude -p`):** Playwright is not available in headless pipe mode. Use WebFetch as fallback and mark the report header with `**Verification:** unconfirmed (batch mode)`. The user can verify manually later.
+
+---
+
+## CI/CD and Quality
+
+- **GitHub Actions** run on every PR: `test-all.mjs` (63+ checks), auto-labeler (risk-based: 🔴 core-architecture, ⚠️ agent-behavior, 📄 docs), welcome bot for first-time contributors
+- **Branch protection** on `main`: status checks must pass before merge. No direct pushes to main (except admin bypass).
+- **Dependabot** monitors npm, Go modules, and GitHub Actions for security updates
+- **Contributing process**: issue first → discussion → PR with linked issue → CI passes → maintainer review → merge
+
+## Community and Governance
+
+- **Code of Conduct**: Contributor Covenant 2.1 with enforcement actions (see `CODE_OF_CONDUCT.md`)
+- **Governance**: BDFL model with contributor ladder — Participant → Contributor → Triager → Reviewer → Maintainer (see `GOVERNANCE.md`)
+- **Security**: private vulnerability reporting via email (see `SECURITY.md`)
+- **Support**: help questions go to Discord/Discussions, not issues (see `SUPPORT.md`)
+- **Discord**: https://discord.gg/8pRpHETxa4
+
+## Stack and Conventions
+
+- Node.js (mjs modules), Playwright (PDF + scraping), YAML (config), HTML/CSS (template), Markdown (data), Canva MCP (optional visual CV)
+- Scripts in `.mjs`, configuration in YAML
+- Output in `output/` (gitignored), Reports in `reports/`
+- JDs in `jds/` (referenced as `local:jds/{file}` in pipeline.md)
+- Batch in `batch/` (gitignored except scripts and prompt)
+- Report numbering: sequential 3-digit zero-padded, max existing + 1
+- **RULE: After each batch of evaluations, run `node merge-tracker.mjs`** to merge tracker additions and avoid duplications.
+- **RULE: NEVER create new entries in applications.md if company+role already exists.** Update the existing entry.
+
+### TSV Format for Tracker Additions
+
+Write one TSV file per evaluation to `batch/tracker-additions/{num}-{company-slug}.tsv`. Single line, 9 tab-separated columns:
+
+```
+{num}\t{date}\t{company}\t{role}\t{status}\t{score}/5\t{pdf_emoji}\t[{num}](reports/{num}-{slug}-{date}.md)\t{note}
+```
+
+**Column order (IMPORTANT -- status BEFORE score):**
+1. `num` -- sequential number (integer)
+2. `date` -- YYYY-MM-DD
+3. `company` -- short company name
+4. `role` -- job title
+5. `status` -- canonical status (e.g., `Evaluated`)
+6. `score` -- format `X.X/5` (e.g., `4.2/5`)
+7. `pdf` -- `✅` or `❌`
+8. `report` -- markdown link, always written **root-relative**: `[num](reports/...)`
+9. `notes` -- one-line summary
+
+**Note:** In applications.md, score comes BEFORE status. The merge script handles this column swap automatically.
+
+**Report link normalization:** The TSV always carries a **root-relative** `[num](reports/...)` link. `merge-tracker.mjs` rewrites it so the link is relative to the tracker file's own directory before writing it into the tracker — `../reports/...` when the tracker is at `data/applications.md`, or `reports/...` at the root layout. This keeps links clickable from the tracker (markdown links resolve relative to the file that contains them). Normalization is idempotent. To fix links in an existing tracker, run `node merge-tracker.mjs --migrate` (see #760).
+
+### Pipeline Integrity
+
+1. **NEVER edit applications.md to ADD new entries** -- Write TSV in `batch/tracker-additions/` and `merge-tracker.mjs` handles the merge.
+2. **YES you can edit applications.md to UPDATE status/notes of existing entries.**
+3. All reports MUST include `**URL:**` in the header (between Score and PDF). Include `**Legitimacy:** {tier}` (see Block G in `modes/oferta.md`).
+4. All statuses MUST be canonical (see `templates/states.yml`).
+5. Health check: `node verify-pipeline.mjs`
+6. Normalize statuses: `node normalize-statuses.mjs`
+7. Dedup: `node dedup-tracker.mjs`
+
+### Canonical States (applications.md)
+
+**Source of truth:** `templates/states.yml`
+
+| State | When to use |
+|-------|-------------|
+| `Evaluated` | Report completed, pending decision |
+| `Applied` | Application sent |
+| `Responded` | Company responded |
+| `Interview` | In interview process |
+| `Offer` | Offer received |
+| `Rejected` | Rejected by company |
+| `Discarded` | Discarded by candidate or offer closed |
+| `SKIP` | Doesn't fit, don't apply |
+
+**RULES:**
+- No markdown bold (`**`) in status field
+- No dates in status field (use the date column)
+- No extra text (use the notes column)
+@AGENTS.md
+<!-- Add anything Claude Code specific that other agents don't need -->

@@ -1,0 +1,18 @@
+{
+  "name": "jobhunt-india",
+  "version": "1.0.0",
+  "description": "Job Hunts Agent India — evaluate roles, build India-format resumes, scan portals, track applications",
+  "author": {
+    "name": "subhamlistingsmanager",
+    "url": "https://github.com/subhamlistingsmanager/jobhunt.agents-India"
+  },
+  "skills": true,
+  "permissions": {
+    "allow": [
+      "Bash(node:*)",
+      "WebFetch(domain:boards-api.greenhouse.io)",
+      "WebFetch(domain:jobs.ashbyhq.com)",
+      "WebSearch"
+    ]
+  }
+}

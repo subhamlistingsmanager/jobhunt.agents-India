@@ -1,0 +1,18 @@
+{
+  "name": "jobhunt-india",
+  "metadata": {
+    "description": "Job Hunts Agent India — evaluate roles, build India-format resumes, scan portals, track applications"
+  },
+  "owner": {
+    "name": "subhamlistingsmanager",
+    "url": "https://github.com/subhamlistingsmanager/jobhunt.agents-India"
+  },
+  "plugins": [
+    {
+      "name": "jobhunt-india",
+      "source": "./",
+      "description": "AI job-search co-pilot for Indian candidates — evaluate roles, build India-format resumes, scan portals, track applications",
+      "category": "productivity"
+    }
+  ]
+}

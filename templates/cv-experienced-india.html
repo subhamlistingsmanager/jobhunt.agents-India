@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<!--
+  cv-experienced-india.html — ATS-optimized single-column resume for
+  EXPERIENCED Indian professionals (roughly 1-15 years).
+
+  DESIGN SYSTEM (see docs/RESUME-DESIGN.md):
+  - Single restrained accent (deep navy --accent) — used ONLY on section titles,
+    the name rule, the target-role line, links, and org names. Everything else is
+    ink/grey for a calm, premium, recruiter-friendly read. No gradients, no boxes.
+  - One typeface (ATS-safe system sans), one type scale, one spacing rhythm.
+  - Tokens live in :root so the fresher template shares the exact same system.
+
+  Based on cv-template.html: same single-column layout, same .section / .job /
+  .edu-item / .cert markup, and the SAME ATS-safe system-font stack (NOT the
+  bundled webfonts) so PDF text extractors don't inject spurious spaces inside
+  words and corrupt ATS keyword parsing (#font-extraction).
+
+  India conventions baked in:
+  - A4 default ({{PAGE_WIDTH}} resolves to A4 width; --format=a4 in generate-pdf.mjs).
+  - Phone in +91 XXXXX XXXXX format ({{PHONE}}). City line in {{LOCATION}}.
+  - Target role under the name ({{TARGET_ROLE}}).
+  - Optional "Additional Details" footer for Notice Period + Current/Expected CTC.
+
+  NO photo, NO date of birth, NO marital status, NO father's/parent's name,
+  NO gender. Legacy Indian-resume fields that hurt ATS parsing and invite bias —
+  intentionally omitted. Do not add them.
+
+  PLACEHOLDERS (shared with cv-template.html unless marked NEW):
+    {{LANG}}                 - html lang attribute (default "en")
+    {{PAGE_WIDTH}}           - page max-width (A4: ~794px / "210mm")
+    {{NAME}}                 - candidate full name
+    {{TARGET_ROLE}}          - NEW: target role/title line under the name
+    {{PHONE}}                - "+91 98765 43210"
+    {{EMAIL}}                - email address
+    {{LINKEDIN_URL}}         - LinkedIn profile URL
+    {{LINKEDIN_DISPLAY}}     - LinkedIn display text
+    {{LOCATION}}             - city, state (e.g. "Bengaluru, Karnataka")
+    {{SECTION_SUMMARY}}      - "Professional Summary"
+    {{SUMMARY_TEXT}}         - 2-3 line summary, metric-led
+    {{SECTION_SKILLS}}       - "Core Skills"
+    {{SKILLS}}               - skills markup (.skills-grid / .skill-item)
+    {{SECTION_EXPERIENCE}}   - "Work Experience"
+    {{EXPERIENCE}}           - .job blocks (company, role, location, period, bullets)
+    {{SECTION_ACHIEVEMENTS}} - NEW: "Key Achievements"
+    {{ACHIEVEMENTS}}         - NEW: impact bullets (.achievements-list ul/li)
+    {{SECTION_EDUCATION}}    - "Education"
+    {{EDUCATION}}            - .edu-item blocks
+    {{SECTION_CERTIFICATIONS}} - "Certifications"
+    {{CERTIFICATIONS}}       - .cert-table rows
+    {{ADDITIONAL_DETAILS}}   - NEW: optional one-line footer string, e.g.
+                               "Notice Period: 60 days  |  Current CTC: 24 LPA  |
+                                Expected CTC: 32 LPA". Remove the footer block if unused.
+
+  Keep this ONE PAGE friendly: trim bullets before spilling to page 2.
+-->
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — CV</title>
+<style>
+  /* ===== DESIGN TOKENS (shared with cv-fresher-india.html) ===== */
+  :root {
+    --accent:      #1f3a5c;  /* single restrained accent — deep professional navy */
+    --accent-tint: #eef2f7;  /* faint accent wash (badges only) */
+    --ink:         #16181d;  /* names, headings, emphasis */
+    --body:        #2c2f36;  /* body copy + bullets */
+    --muted:       #5f6672;  /* contact line, supporting text */
+    --meta:        #8b909b;  /* dates, locations, least-important meta */
+    --line:        #e2e4ea;  /* hairlines + dividers */
+
+    --fs-name: 24px;
+    --fs-role: 11.5px;
+    --fs-h2:   10.5px;
+    --fs-body: 10.7px;
+    --fs-meta: 10px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+
+    --font: 'Liberation Sans', 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: var(--font);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--body);
+    background: #ffffff;
+  }
+
+  .page {
+    width: 100%;
+    max-width: {{PAGE_WIDTH}};
+    margin: 0 auto;
+    padding: 2px 0;
+  }
+
+  a { white-space: nowrap; }   /* links never break across lines */
+
+  /* ===== HEADER ===== */
+  .header { margin-bottom: var(--space-4); }
+
+  .header h1 {
+    font-family: var(--font);
+    font-size: var(--fs-name);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    margin-bottom: 2px;
+  }
+
+  .header-role {
+    font-size: var(--fs-role);
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+    margin-bottom: var(--space-2);
+    line-height: 1.25;
+  }
+
+  /* solid accent rule (replaces the old two-colour gradient) */
+  .header-gradient {
+    height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+    margin-bottom: var(--space-2);
+  }
+
+  .contact-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    font-family: var(--font);
+    font-size: var(--fs-meta);
+    line-height: 1.4;
+    color: var(--muted);
+  }
+  .contact-row a { color: var(--accent); text-decoration: none; }
+  .contact-row .separator { color: #cfd2da; }
+
+  /* ===== SECTIONS ===== */
+  .section { margin-bottom: var(--space-4); }
+
+  .section-title {
+    font-family: var(--font);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-1);
+    margin-bottom: var(--space-2);
+    line-height: 1.2;
+  }
+
+  /* ===== PROFESSIONAL SUMMARY ===== */
+  .summary-text {
+    font-size: var(--fs-body);
+    line-height: 1.65;
+    color: var(--body);
+  }
+
+  /* ===== CORE SKILLS ===== */
+  .skills-grid { display: flex; flex-wrap: wrap; gap: 5px 14px; }
+  .skill-item { font-size: var(--fs-meta); color: var(--body); }
+  .skill-category { font-weight: 600; color: var(--ink); font-size: var(--fs-meta); }
+
+  /* ===== WORK EXPERIENCE ===== */
+  .job { margin-bottom: var(--space-3); }
+
+  .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    margin-bottom: 2px;
+  }
+  .job-company { font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--ink); }
+  .job-period { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; }
+  .job-role { font-size: 10.8px; font-weight: 600; color: var(--accent); margin-bottom: 1px; }
+  .job-location { font-size: var(--fs-meta); color: var(--meta); margin-bottom: 3px; }
+
+  .job ul { padding-left: 16px; margin-top: 4px; }
+  .job li { font-size: var(--fs-body); line-height: 1.55; color: var(--body); margin-bottom: 3px; }
+  .job li strong { font-weight: 600; color: var(--ink); }
+
+  /* ===== KEY ACHIEVEMENTS ===== */
+  .achievements-list ul { padding-left: 16px; }
+  .achievements-list li { font-size: var(--fs-body); line-height: 1.55; color: var(--body); margin-bottom: 3px; }
+  .achievements-list li strong { font-weight: 600; color: var(--ink); }
+
+  /* ===== EDUCATION ===== */
+  .edu-item { margin-bottom: var(--space-2); }
+  .edu-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .edu-title { font-weight: 600; font-size: 10.8px; color: var(--ink); }
+  .edu-org { color: var(--accent); font-weight: 600; }
+  .edu-year { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; }
+  .edu-desc { font-size: var(--fs-meta); color: var(--muted); margin-top: 1px; line-height: 1.5; }
+  .edu-score { font-weight: 600; color: var(--ink); }
+
+  /* ===== CERTIFICATIONS ===== */
+  .cert-table { display: table; width: 100%; }
+  .cert-item { display: table-row; }
+  .cert-item > * { display: table-cell; vertical-align: baseline; padding-bottom: 5px; }
+  .cert-title { font-size: var(--fs-meta); font-weight: 500; color: var(--body); }
+  .cert-org { color: var(--accent); white-space: nowrap; }
+  .cert-year { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; text-align: right; width: 44px; }
+
+  /* ===== ADDITIONAL DETAILS FOOTER (Notice Period / CTC) ===== */
+  .additional-details {
+    margin-top: var(--space-1);
+    padding-top: var(--space-2);
+    border-top: 1px solid var(--line);
+    font-size: var(--fs-meta);
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .additional-details .label { font-weight: 600; color: var(--ink); }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { padding: 0; }
+  }
+
+  /* ===== PAGE BREAK CONTROL ===== */
+  .avoid-break, .job, .edu-item, .cert-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ===== RTL (Arabic) Support ===== */
+  html[lang="ar"] body { direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  html[lang="ar"] .header h1, html[lang="ar"] .section-title,
+  html[lang="ar"] .job-company, html[lang="ar"] .skill-category { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  html[lang="ar"] .job ul, html[lang="ar"] .achievements-list ul { padding-right: 16px; padding-left: 0; }
+  html[lang="ar"] .cert-year { text-align: left; }
+  html[lang="ar"] .cert-table { direction: rtl; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header avoid-break">
+    <h1>{{NAME}}</h1>
+    <div class="header-role">{{TARGET_ROLE}}</div>
+    <div class="header-gradient"></div>
+    <div class="contact-row">
+      <span>{{PHONE}}</span>
+      <span class="separator">|</span>
+      <span>{{EMAIL}}</span>
+      <span class="separator">|</span>
+      <span>{{LOCATION}}</span>
+      <span class="separator">|</span>
+      <a href="{{LINKEDIN_URL}}">{{LINKEDIN_DISPLAY}}</a>
+    </div>
+  </div>
+
+  <!-- PROFESSIONAL SUMMARY -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_SUMMARY}}</div>
+    <div class="summary-text">{{SUMMARY_TEXT}}</div>
+  </div>
+
+  <!-- CORE SKILLS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_SKILLS}}</div>
+    {{SKILLS}}
+  </div>
+
+  <!-- WORK EXPERIENCE -->
+  <div class="section">
+    <div class="section-title">{{SECTION_EXPERIENCE}}</div>
+    {{EXPERIENCE}}
+  </div>
+
+  <!-- KEY ACHIEVEMENTS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_ACHIEVEMENTS}}</div>
+    <div class="achievements-list">{{ACHIEVEMENTS}}</div>
+  </div>
+
+  <!-- EDUCATION -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_EDUCATION}}</div>
+    {{EDUCATION}}
+  </div>
+
+  <!-- CERTIFICATIONS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_CERTIFICATIONS}}</div>
+    <div class="cert-table">{{CERTIFICATIONS}}</div>
+  </div>
+
+  <!-- ADDITIONAL DETAILS (optional — remove this whole block if not wanted) -->
+  <div class="additional-details avoid-break">
+    {{ADDITIONAL_DETAILS}}
+  </div>
+
+</div>
+</body>
+</html>

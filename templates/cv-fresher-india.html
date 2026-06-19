@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<!--
+  cv-fresher-india.html — ATS-optimized single-column resume for
+  FRESHERS / students / campus placements in India (final-year or 0-1 yr).
+
+  DESIGN SYSTEM (see docs/RESUME-DESIGN.md): shares the EXACT token set in
+  :root with cv-experienced-india.html — single restrained navy accent, one
+  typeface, one type scale, one spacing rhythm. No gradients, no boxes.
+
+  Based on cv-template.html: same single-column layout and the SAME ATS-safe
+  system-font stack (NOT the bundled webfonts) so PDF text extractors parse
+  keywords cleanly (#font-extraction).
+
+  India fresher conventions baked in (ORDER MATTERS):
+  1. Career Objective
+  2. Education FIRST and prominent — 10th (%/board), 12th (%/board),
+     Degree (CGPA or %/college/graduation year). Freshers are hired on
+     academics, so this leads.
+  3. Technical Skills
+  4. Projects (academic/personal, with tech stack + repo/demo links)
+  5. Internships / Training
+  6. Certifications & Courses
+  7. Positions of Responsibility / Achievements
+  8. Coding Profiles (LeetCode / GitHub / HackerRank) — optional
+
+  A4 default, one page, system fonts. NO photo, NO date of birth, NO marital
+  status, NO father's/parent's name. Legacy fields that hurt ATS parsing and
+  invite bias — intentionally omitted. Do not add them.
+
+  PLACEHOLDERS (shared with cv-template.html unless marked NEW):
+    {{LANG}}, {{PAGE_WIDTH}}, {{NAME}}
+    {{TARGET_ROLE}}           - NEW: target role line (e.g. "Software Engineer (Fresher)")
+    {{PHONE}}, {{EMAIL}}, {{LOCATION}}
+    {{LINKEDIN_URL}}, {{LINKEDIN_DISPLAY}}
+    {{GITHUB_URL}}            - NEW: GitHub profile URL
+    {{GITHUB_DISPLAY}}        - NEW: GitHub display text (e.g. "github.com/...")
+    {{SECTION_OBJECTIVE}}     - NEW: "Career Objective"
+    {{OBJECTIVE_TEXT}}        - NEW: 2-3 line objective
+    {{SECTION_EDUCATION}}, {{EDUCATION}}    - .edu-item blocks (Degree, 12th, 10th)
+    {{SECTION_SKILLS}}, {{SKILLS}}          - .skills-grid / .skill-item
+    {{SECTION_PROJECTS}}, {{PROJECTS}}      - .project blocks (title, tech, links, bullets)
+    {{SECTION_INTERNSHIPS}}   - NEW: "Internships & Training"
+    {{INTERNSHIPS}}           - .job blocks (reuses work-experience markup)
+    {{SECTION_CERTIFICATIONS}}, {{CERTIFICATIONS}} - .cert-table rows
+    {{SECTION_RESPONSIBILITIES}} - NEW: "Positions of Responsibility & Achievements"
+    {{RESPONSIBILITIES}}      - NEW: bullet list (.responsibilities-list ul/li)
+    {{SECTION_CODING_PROFILES}} - NEW: "Coding Profiles" (optional)
+    {{CODING_PROFILES}}       - NEW: inline profile links (.profiles-row)
+-->
+<html lang="{{LANG}}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{NAME}} — CV</title>
+<style>
+  /* ===== DESIGN TOKENS (shared with cv-experienced-india.html) ===== */
+  :root {
+    --accent:      #1f3a5c;
+    --accent-tint: #eef2f7;
+    --ink:         #16181d;
+    --body:        #2c2f36;
+    --muted:       #5f6672;
+    --meta:        #8b909b;
+    --line:        #e2e4ea;
+
+    --fs-name: 24px;
+    --fs-role: 11.5px;
+    --fs-h2:   10.5px;
+    --fs-body: 10.7px;
+    --fs-meta: 10px;
+
+    --space-1: 4px;
+    --space-2: 8px;
+    --space-3: 12px;
+    --space-4: 16px;
+
+    --font: 'Liberation Sans', 'Helvetica Neue', Arial, 'DejaVu Sans', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  body {
+    font-family: var(--font);
+    font-size: 11px;
+    line-height: 1.5;
+    color: var(--body);
+    background: #ffffff;
+  }
+
+  .page { width: 100%; max-width: {{PAGE_WIDTH}}; margin: 0 auto; padding: 2px 0; }
+  a { white-space: nowrap; }
+
+  /* ===== HEADER ===== */
+  .header { margin-bottom: var(--space-4); }
+  .header h1 {
+    font-family: var(--font);
+    font-size: var(--fs-name);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: -0.01em;
+    line-height: 1.12;
+    margin-bottom: 2px;
+  }
+  .header-role {
+    font-size: var(--fs-role);
+    font-weight: 600;
+    color: var(--accent);
+    letter-spacing: 0.01em;
+    margin-bottom: var(--space-2);
+    line-height: 1.25;
+  }
+  .header-gradient { height: 2px; background: var(--accent); border-radius: 1px; margin-bottom: var(--space-2); }
+  .contact-row {
+    display: flex; flex-wrap: wrap; gap: 6px 12px;
+    font-family: var(--font); font-size: var(--fs-meta); line-height: 1.4; color: var(--muted);
+  }
+  .contact-row a { color: var(--accent); text-decoration: none; }
+  .contact-row .separator { color: #cfd2da; }
+
+  /* ===== SECTIONS ===== */
+  .section { margin-bottom: var(--space-4); }
+  .section-title {
+    font-family: var(--font);
+    font-size: var(--fs-h2);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: var(--space-1);
+    margin-bottom: var(--space-2);
+    line-height: 1.2;
+  }
+
+  /* ===== CAREER OBJECTIVE ===== */
+  .summary-text { font-size: var(--fs-body); line-height: 1.65; color: var(--body); }
+
+  /* ===== EDUCATION (prominent for freshers) ===== */
+  .edu-item { margin-bottom: var(--space-2); }
+  .edu-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+  .edu-title { font-weight: 600; font-size: 11px; color: var(--ink); }
+  .edu-org { color: var(--accent); font-weight: 600; }
+  .edu-year { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; }
+  .edu-desc { font-size: var(--fs-meta); color: var(--muted); margin-top: 1px; line-height: 1.5; }
+  .edu-score { font-weight: 600; color: var(--ink); }
+
+  /* ===== TECHNICAL SKILLS ===== */
+  .skills-grid { display: flex; flex-wrap: wrap; gap: 5px 14px; }
+  .skill-item { font-size: var(--fs-meta); color: var(--body); }
+  .skill-category { font-weight: 600; color: var(--ink); font-size: var(--fs-meta); }
+
+  /* ===== PROJECTS ===== */
+  .project { margin-bottom: var(--space-3); }
+  .project-title { font-family: var(--font); font-size: 11px; font-weight: 700; color: var(--ink); }
+  .project-badge {
+    font-size: 8.5px; font-weight: 600; color: var(--accent);
+    background: var(--accent-tint); padding: 1px 6px; border-radius: 2px; margin-left: 6px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .project-links { font-size: 9.5px; color: var(--muted); margin-top: 1px; }
+  .project-links a { color: var(--accent); text-decoration: none; }
+  .project-desc { font-size: var(--fs-body); color: var(--body); margin-top: 2px; line-height: 1.5; }
+  .project ul { padding-left: 16px; margin-top: 3px; }
+  .project li { font-size: var(--fs-body); line-height: 1.5; color: var(--body); margin-bottom: 2px; }
+  .project-tech { font-size: 9.5px; color: var(--meta); margin-top: 2px; }
+
+  /* ===== INTERNSHIPS / TRAINING (reuses .job markup) ===== */
+  .job { margin-bottom: var(--space-3); }
+  .job-header { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 2px; }
+  .job-company { font-family: var(--font); font-size: 12px; font-weight: 700; color: var(--ink); }
+  .job-period { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; }
+  .job-role { font-size: 10.8px; font-weight: 600; color: var(--accent); margin-bottom: 1px; }
+  .job-location { font-size: var(--fs-meta); color: var(--meta); margin-bottom: 3px; }
+  .job ul { padding-left: 16px; margin-top: 4px; }
+  .job li { font-size: var(--fs-body); line-height: 1.55; color: var(--body); margin-bottom: 3px; }
+  .job li strong { font-weight: 600; color: var(--ink); }
+
+  /* ===== CERTIFICATIONS & COURSES ===== */
+  .cert-table { display: table; width: 100%; }
+  .cert-item { display: table-row; }
+  .cert-item > * { display: table-cell; vertical-align: baseline; padding-bottom: 5px; }
+  .cert-title { font-size: var(--fs-meta); font-weight: 500; color: var(--body); }
+  .cert-org { color: var(--accent); white-space: nowrap; }
+  .cert-year { font-size: var(--fs-meta); color: var(--meta); white-space: nowrap; text-align: right; width: 44px; }
+
+  /* ===== POSITIONS OF RESPONSIBILITY & ACHIEVEMENTS ===== */
+  .responsibilities-list ul { padding-left: 16px; }
+  .responsibilities-list li { font-size: var(--fs-body); line-height: 1.55; color: var(--body); margin-bottom: 3px; }
+  .responsibilities-list li strong { font-weight: 600; color: var(--ink); }
+
+  /* ===== CODING PROFILES (optional) ===== */
+  .profiles-row { display: flex; flex-wrap: wrap; gap: 5px 14px; font-size: var(--fs-meta); color: var(--body); }
+  .profiles-row a { color: var(--accent); text-decoration: none; }
+  .profiles-row .label { font-weight: 600; color: var(--ink); }
+
+  /* ===== PRINT ===== */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .page { padding: 0; }
+  }
+
+  /* ===== PAGE BREAK CONTROL ===== */
+  .avoid-break, .job, .project, .edu-item, .cert-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  /* ===== RTL (Arabic) Support ===== */
+  html[lang="ar"] body { direction: rtl; text-align: right; font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  html[lang="ar"] .header h1, html[lang="ar"] .section-title,
+  html[lang="ar"] .job-company, html[lang="ar"] .project-title,
+  html[lang="ar"] .skill-category { font-family: 'Segoe UI', Tahoma, Arial, sans-serif; }
+  html[lang="ar"] .job ul, html[lang="ar"] .project ul,
+  html[lang="ar"] .responsibilities-list ul { padding-right: 16px; padding-left: 0; }
+  html[lang="ar"] .project-badge { margin-right: 6px; margin-left: 0; }
+  html[lang="ar"] .cert-year { text-align: left; }
+  html[lang="ar"] .cert-table { direction: rtl; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="header avoid-break">
+    <h1>{{NAME}}</h1>
+    <div class="header-role">{{TARGET_ROLE}}</div>
+    <div class="header-gradient"></div>
+    <div class="contact-row">
+      <span>{{PHONE}}</span>
+      <span class="separator">|</span>
+      <span>{{EMAIL}}</span>
+      <span class="separator">|</span>
+      <span>{{LOCATION}}</span>
+      <span class="separator">|</span>
+      <a href="{{LINKEDIN_URL}}">{{LINKEDIN_DISPLAY}}</a>
+      <span class="separator">|</span>
+      <a href="{{GITHUB_URL}}">{{GITHUB_DISPLAY}}</a>
+    </div>
+  </div>
+
+  <!-- CAREER OBJECTIVE -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_OBJECTIVE}}</div>
+    <div class="summary-text">{{OBJECTIVE_TEXT}}</div>
+  </div>
+
+  <!-- EDUCATION (first and prominent for freshers) -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_EDUCATION}}</div>
+    {{EDUCATION}}
+  </div>
+
+  <!-- TECHNICAL SKILLS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_SKILLS}}</div>
+    {{SKILLS}}
+  </div>
+
+  <!-- PROJECTS -->
+  <div class="section">
+    <div class="section-title">{{SECTION_PROJECTS}}</div>
+    {{PROJECTS}}
+  </div>
+
+  <!-- INTERNSHIPS & TRAINING -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_INTERNSHIPS}}</div>
+    {{INTERNSHIPS}}
+  </div>
+
+  <!-- CERTIFICATIONS & COURSES -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_CERTIFICATIONS}}</div>
+    <div class="cert-table">{{CERTIFICATIONS}}</div>
+  </div>
+
+  <!-- POSITIONS OF RESPONSIBILITY & ACHIEVEMENTS -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_RESPONSIBILITIES}}</div>
+    <div class="responsibilities-list">{{RESPONSIBILITIES}}</div>
+  </div>
+
+  <!-- CODING PROFILES (optional — remove this whole block if unused) -->
+  <div class="section avoid-break">
+    <div class="section-title">{{SECTION_CODING_PROFILES}}</div>
+    <div class="profiles-row">{{CODING_PROFILES}}</div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,138 @@
+# Job Hunts Agent India — Profile Configuration
+# Copy this file to config/profile.yml and fill in your details.
+# This is the single source of truth for your personal data across all modes.
+#
+# Money in India is quoted as CTC in ₹ LPA (lakhs per annum). 1 lakh = 100,000.
+# Example: "12 LPA" = ₹12,00,000 per year total cost-to-company.
+
+candidate:
+  full_name: "Rohan Sharma"
+  email: "rohan.sharma@example.com"
+  phone: "+91 98765 43210"
+  location: "Bengaluru, Karnataka"
+  linkedin: "linkedin.com/in/rohansharma"
+  github: "github.com/rohansharma"         # optional — strong signal for tech roles
+  portfolio_url: ""                          # optional
+  # Coding profiles help for fresher/SDE roles (optional):
+  # leetcode: "leetcode.com/rohansharma"
+  # hackerrank: "hackerrank.com/rohansharma"
+
+# Are you a fresher or an experienced professional?
+# This drives which resume format the system uses by default:
+#   "fresher"     → academics-first resume (10th/12th %, CGPA, projects, internships)
+#   "experienced" → impact-first resume (work experience, achievements, CTC, notice)
+candidate_type: "experienced"   # "fresher" | "experienced"
+
+target_roles:
+  # Your North Star roles — what you're optimizing for
+  primary:
+    - "Backend Engineer"
+    - "Full-Stack Engineer"
+  # Archetypes help the evaluation system score fit.
+  # These are generic tech examples — ask the agent to change them to YOUR field
+  # (data, QA, DevOps, product, design, finance, sales, marketing, etc.).
+  archetypes:
+    - name: "Backend / Platform Engineer"
+      level: "Mid-Senior"
+      fit: "primary"        # primary = dream role, secondary = good fit, adjacent = stretch
+    - name: "Full-Stack Engineer"
+      level: "Mid"
+      fit: "secondary"
+    - name: "Data / Analytics Engineer"
+      level: "Mid"
+      fit: "adjacent"
+
+narrative:
+  # Your professional headline (1 line)
+  headline: "Backend engineer building reliable, scalable services for Indian fintech"
+  # Your story — what makes you unique (freshers: your strongest project or internship)
+  exit_story: "Scaled payments infra at a Series B fintech from 50 to 500 TPS. Now looking for a high-ownership backend role at a product company."
+  # Your top 3-5 superpowers
+  superpowers:
+    - "Designing and operating high-throughput backend systems"
+    - "Going from idea to production fast"
+    - "Owning incidents end-to-end"
+  # Proof points — projects, repos, case studies with measurable impact
+  proof_points:
+    - name: "Payments reconciliation service"
+      url: ""
+      hero_metric: "Cut settlement mismatches 90%, saving ~40 hrs/month of manual ops"
+    - name: "Open-source rate limiter"
+      url: "https://github.com/rohansharma/ratelimiter"
+      hero_metric: "300+ GitHub stars"
+
+compensation:
+  # Quote everything as CTC in ₹ LPA (lakhs per annum).
+  currency: "INR"
+  current_ctc: "18 LPA"          # current total CTC (fixed + variable + ESOP value). Freshers: leave "" or expected stipend.
+  current_fixed: "15 LPA"        # fixed component of current CTC (helps comparison)
+  target_ctc: "26-30 LPA"        # your target total CTC for the next role
+  minimum_ctc: "24 LPA"          # walk-away number — won't move below this
+  # How you weigh non-cash comp (some prefer cash, some chase ESOPs):
+  esop_appetite: "moderate"      # "low" (want cash) | "moderate" | "high" (startup equity OK)
+  notes: "Open to slightly lower fixed if ESOP/variable is realistic and the role has strong ownership."
+
+work_preference:
+  mode: "hybrid"                 # "remote" | "hybrid" | "onsite"
+  # Cities you'd work in / relocate to. Common Indian tech hubs:
+  preferred_locations:
+    - "Bengaluru"
+    - "Hyderabad"
+    - "Pune"
+    - "Remote (India)"
+  willing_to_relocate: true
+  # Hard "no" locations (optional)
+  avoid_locations: []
+
+# Notice period & joining timeline — Indian recruiters ask this on almost every form.
+notice_period:
+  current_days: 60               # your current notice period in days (0 for freshers/immediate)
+  can_buyout: true               # can you / will the new employer buy out the notice?
+  earliest_join_days: 30         # realistic earliest joining if buyout/early release works
+  serving_notice: false          # true if you've already resigned and are serving notice
+
+education:
+  # Most relevant for FRESHERS (academics-first resume). Experienced users can keep
+  # just the highest degree.
+  highest_degree: "B.Tech, Computer Science"
+  college: "NIT Trichy"
+  graduation_year: 2020
+  cgpa: "8.4/10"                 # or percentage, e.g. "84%"
+  # Freshers usually include 10th/12th — fill these if you're a fresher:
+  twelfth_percentage: ""         # e.g. "91% (CBSE, 2016)"
+  tenth_percentage: ""           # e.g. "93% (CBSE, 2014)"
+
+# Optional follow-up cadence preferences for `node followup-cadence.mjs`.
+# CLI flags still win for one-off runs (for example `--applied-days 10`).
+# followup_cadence:
+#   applied_first_days: 7
+#   applied_subsequent_days: 7
+#   applied_max_followups: 2
+#   responded_initial_days: 1
+#   responded_subsequent_days: 3
+#   interview_thankyou_days: 1
+
+cv:
+  output_format: "html"          # "html" (default) or "latex"
+  page_size: "a4"                # India uses A4 (not US Letter)
+  # Which India resume template to use. "auto" picks based on candidate_type above.
+  #   "auto" | "experienced" (cv-experienced-india.html) | "fresher" (cv-fresher-india.html)
+  template: "auto"
+
+# ── Cover Letter / Application Settings ─────────────────────────────────────
+#
+# Used by `/jobhunt cover` and application forms (`/jobhunt apply`).
+
+cover_letter:
+  # Surfaced when a JD asks for an immediate start. Pulled from notice_period above.
+  notice_period_days: 60
+  # Your current professional domain (used to detect domain gaps vs the JD).
+  primary_domain: "fintech / payments"
+
+# ── Auto-PDF threshold ──────────────────────────────────────────────────────
+#
+# An offer's tailored CV PDF is auto-generated only when its score is
+# >= this threshold during `/jobhunt pipeline` / batch runs. Generating a PDF
+# costs ~30-60s (Playwright). Default if absent: 3.0. Raise to 4.0 to only
+# auto-generate for strong matches; set 0 to generate for every offer.
+# auto_pdf_score_threshold: 4.0
