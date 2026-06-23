@@ -129,6 +129,6 @@ Not professional career advice; it's a personal decision-support tool. See `LEGA
 
 ## Credits & licence
 
-India adaptation maintained by [@subhamlistingsmanager](https://github.com/subhamlistingsmanager).
+India adaptation maintained by [@ca-who-codes](https://github.com/ca-who-codes).
 
 Markets and job hunts carry uncertainty — use your own judgement on every application.
